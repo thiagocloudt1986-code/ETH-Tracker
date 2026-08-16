@@ -46,6 +46,28 @@ export default function App() {
           scenarioData.market.high24h = Math.round(live.price * 1.025);
           scenarioData.market.low24h = Math.round(live.price * 0.972);
           scenarioData.market.atr14 = Number((live.price * 0.024).toFixed(2));
+          if (live.gasPrice > 0) scenarioData.market.gasPriceGwei = live.gasPrice;
+          if (live.rsi14 > 0) scenarioData.market.rsi14 = live.rsi14;
+          if (live.fundingRate !== 0) scenarioData.market.fundingRate = live.fundingRate;
+
+          scenarioData.defi.tvlUsd = live.tvlUsd;
+          scenarioData.defi.tvlChange24h = live.tvlChange24h;
+          scenarioData.defi.topProtocols = live.topProtocols;
+          scenarioData.defi.stablecoinTotalUsd = live.stablecoinTotalUsd;
+
+          if (live.etfFlows) {
+            scenarioData.institutional.etfNetFlowTodayUsd = live.etfFlows.netFlowUsd;
+          }
+
+          if (live.news.length > 0) {
+            scenarioData.news = live.news.map(n => ({
+              ...n,
+              impact: n.impact as 'high' | 'medium' | 'low',
+              sentiment: n.sentiment as 'positive' | 'negative' | 'neutral',
+              category: n.category as 'SEC/Regulação' | 'ETF' | 'Upgrade/Network' | 'Macro' | 'DeFi/Hack' | 'Geral',
+            }));
+          }
+
           scenarioData.sentiment.fearAndGreedIndex = live.fgIndex;
           scenarioData.sentiment.fearAndGreedLabel = live.fgLabel;
         }
