@@ -15,6 +15,7 @@ import { AlertsDrawer } from './components/AlertsDrawer';
 import { ScenarioPreset } from './types';
 import { getScenarioData } from './services/marketData';
 import { calculateConfluence } from './services/confluenceEngine';
+import { fetchLiveData } from './services/liveApi';
 
 export default function App() {
   const [scenario, setScenario] = useState<ScenarioPreset>('live');
@@ -26,36 +27,41 @@ export default function App() {
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
   const [hasUnreadAlerts, setHasUnreadAlerts] = useState(true);
 
-  // Fetch market summary from backend Express API with client-side fallback
   const fetchMarketSummary = useCallback(async (preset: ScenarioPreset, isSilent = false) => {
     if (!isSilent) {
       setIsRefreshing(true);
     }
-    
+
     try {
-      const res = await fetch(`/api/market-summary?preset=${preset}`);
-      if (res.ok) {
-        const data = await res.json();
-        setMarketSummary(data);
-      } else {
-        throw new Error(`HTTP error ${res.status}`);
+      const scenarioData = getScenarioData(preset);
+
+      if (preset === 'live') {
+        const live = await fetchLiveData();
+        if (live) {
+          scenarioData.market.price = live.price;
+          scenarioData.market.change24h = live.change24h;
+          scenarioData.market.volume24hUsd = live.volume24hUsd;
+          scenarioData.market.technicalSupport = Math.round(live.price * 0.962);
+          scenarioData.market.technicalResistance = Math.round(live.price * 1.038);
+          scenarioData.market.high24h = Math.round(live.price * 1.025);
+          scenarioData.market.low24h = Math.round(live.price * 0.972);
+          scenarioData.market.atr14 = Number((live.price * 0.024).toFixed(2));
+          scenarioData.sentiment.fearAndGreedIndex = live.fgIndex;
+          scenarioData.sentiment.fearAndGreedLabel = live.fgLabel;
+        }
       }
+
+      const signal = calculateConfluence(
+        scenarioData.market,
+        scenarioData.defi,
+        scenarioData.institutional,
+        scenarioData.sentiment,
+        scenarioData.whales,
+        scenarioData.news
+      );
+      setMarketSummary({ ...scenarioData, signal });
     } catch (err) {
-      console.warn('Backend fetch unavail, using client engine fallback:', err);
-      try {
-        const scenarioData = getScenarioData(preset);
-        const signal = calculateConfluence(
-          scenarioData.market,
-          scenarioData.defi,
-          scenarioData.institutional,
-          scenarioData.sentiment,
-          scenarioData.whales,
-          scenarioData.news
-        );
-        setMarketSummary({ ...scenarioData, signal });
-      } catch (fallbackErr) {
-        console.error('Fallback generation error:', fallbackErr);
-      }
+      console.error('Market summary generation error:', err);
     } finally {
       setIsRefreshing(false);
       setIsLoadingInitial(false);

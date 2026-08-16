@@ -29,7 +29,9 @@ export const MarketChart: React.FC<MarketChartProps> = ({ market }) => {
         ? `Dia ${Math.floor(i / 3) + 1}`
         : `${(i + 1).toString().padStart(2, '0')}:00`;
 
-      const randomNoise = (Math.random() - 0.48) * (basePrice * vol * 0.4);
+      const seed = (basePrice * 0.0001 + i * 0.618) % 1;
+      const pseudoRand = Math.sin(seed * 127.1 + i * 311.7) * 43758.5453 % 1;
+      const randomNoise = (pseudoRand - 0.48) * (basePrice * vol * 0.4);
       tempPrice = i === count - 1 ? basePrice : tempPrice + randomNoise;
 
       points.push({
