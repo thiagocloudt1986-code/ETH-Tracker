@@ -1,0 +1,6 @@
+{
+  "name": "ETH Tracker Pro",
+  "description": "Rastreador Inteligente Ethereum com Sinais de Alta Confluência, Dados On-Chain, Fluxo Institucional de ETFs, Baleias e Análise Macro.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
